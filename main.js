@@ -9,6 +9,7 @@ const path = require('path')
  
 function createWindow () {
     // Create the browser window.
+    require('./menu.js')
     const mainWindow = new BrowserWindow({
         width: 800, // 窗口宽度
         height: 600,  // 窗口高度
