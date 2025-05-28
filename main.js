@@ -7,7 +7,6 @@ const { execSync } = require('child_process');
 const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
-const iconPath = path.join(__dirname, './public/logo.ico')   //应用运行时的标题栏图标
 const hdcPath = getHdcPath();
 console.log('hdcPath:', hdcPath);
 
@@ -16,8 +15,8 @@ function createWindow() {
     // require('./menu.js')
     const mainWindow = new BrowserWindow({
         width: 800, // 窗口宽度
-        height: 650,  // 窗口高度
-        icon: iconPath,     //应用运行时的标题栏图标
+        height: 600,  // 窗口高度
+        icon: path.join(process.resourcesPath, './public/logo.ico'),     //应用运行时的标题栏图标
         // title: "Electron app", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
         webPreferences: { // 网页功能设置
             backgroundThrottling: false,   //设置应用在后台正常运行
@@ -121,10 +120,18 @@ function createWindow() {
                     mainWindow.webContents.send('hdc-status', 'send file.');
                     const sendOutput = execSync(`${hdcPath} file send ${tmpDirPath} data/local/tmp/`);
                     console.log(sendOutput.toString())
+                    if (sendOutput.toString().indexOf('Fail') > -1) {
+                        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+                        return;
+                    }
                     console.log("install ...");
                     mainWindow.webContents.send('hdc-status', 'install ...');
                     const installOutput = execSync(`${hdcPath} shell bm install -r -p data/local/tmp/${fileName}`);
                     console.log(installOutput.toString())
+                    if (installOutput.toString().indexOf('Fail') > -1) {
+                        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+                        return;
+                    }
                     execSync(`${hdcPath} shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
                     execSync(`${hdcPath} shell rm -rf data/local/tmp/${fileName}`);
 

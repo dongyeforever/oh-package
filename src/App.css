@@ -54,16 +54,18 @@ h2 {
 .image-container img {
   max-width: 100%;
   height: auto;
+  max-width: 356px;
   max-height: 200px;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-top: -20px;
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); */
 }
 
 .path-selection .path-label {
   display: block;
   font-weight: bold;
   margin-top: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   font-size: 16px;
 }
 

@@ -89,7 +89,7 @@ const App: React.FC = () => {
             <h2>关于 Package Tool</h2>
           </div>
           <p className="description">
-            OpenHarmony Package Tool 是鸿蒙专用包安装工具，支持一键自动安装，可部署到模拟器与真机，操作简便提升效率。
+            OpenHarmony Package Tool 是鸿蒙系统专用包安装工具，支持一键自动安装，可部署到模拟器与真机，操作简便。
           </p>
         </div>
         <div className="image-container">
