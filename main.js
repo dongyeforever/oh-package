@@ -7,12 +7,11 @@ const { execSync } = require('child_process');
 const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
-const hdcPath = getHdcPath();
+const hdcPath = `"${getHdcPath()}"`;
 console.log('hdcPath:', hdcPath);
 
 function createWindow() {
     // Create the browser window.
-    // require('./menu.js')
     const mainWindow = new BrowserWindow({
         width: 800, // 窗口宽度
         height: 600,  // 窗口高度
@@ -59,7 +58,6 @@ function createWindow() {
             filters: [
                 // { name: 'All Files', extensions: ['*'] },
                 // { name: 'Images', extensions: ['jpg', 'png', 'gif'] },
-                // { name: 'Documents', extensions: ['pdf', 'docx', 'txt'] },
                 { name: 'HarmonyPackage', extensions: ['app', 'hap'] }
             ]
         });
@@ -106,12 +104,12 @@ function createWindow() {
                     fs.renameSync(zipFilePath, filePath);
                     // 停止 app
                     console.log("stop app.");
-                    execSync(`hdc shell aa force-stop ${PACKAGE_NAME}`);
+                    execSync(`${hdcPath} shell aa force-stop ${PACKAGE_NAME}`);
 
                     if (isOverwrite) {
                         // 卸载
                         console.log("uninstall...");
-                        execSync(`hdc uninstall ${PACKAGE_NAME}`);
+                        execSync(`${hdcPath} uninstall ${PACKAGE_NAME}`);
                     }
 
                     // 安装.app文件

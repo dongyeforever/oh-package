@@ -68,7 +68,8 @@ const App: React.FC = () => {
       setHdcStatus('正在检查 hdc 环境变量...');
 
       // 执行 HDC 检查
-      await window.electronAPI.checkHdc();
+      const result = await window.electronAPI.checkHdc();
+      console.log('hdc 环境变量:', result);
 
       // HDC 检查成功后可以继续安装流程
       console.log('安装文件:', selectedFile, isOverwrite);

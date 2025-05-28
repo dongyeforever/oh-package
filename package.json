@@ -1,14 +1,55 @@
 {
   "name": "harmony-package",
-  "version": "0.1.0",
+  "author": "Rui",
+  "version": "1.0.0",
   "private": true,
   "main": "main.js",
   "homepage": ".",
+  "build": {
+    "productName": "HarmonyOS Package Tool",
+    "appId": "vip.lovek.oh-package",
+    "icon": "public/logo.png",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "directories": {
+      "buildResources": ".",
+      "output": "release/build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "build/**/*",
+      "node_modules/**/*",
+      "hdc/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "hdc",
+        "to": "hdc",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "public/logo.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "public/logo.icns"
+    },
+    "dmg": {
+      "backgroundColor": "#fff"
+    },
+    "extends": null
+  },
   "dependencies": {
     "@electron/remote": "^2.1.2",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^13.2.1",
     "@types/node": "^16.7.13",
     "@types/react-dom": "^19.0.0",
     "concurrently": "^9.1.2",
@@ -22,10 +63,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:after": "concurrently \"cp -r hdc ./build/\" \"cp *.js ./build/\"",
     "electron": "electron .",
     "dev": "concurrently \"cross-env NODE_ENV=dev npm run start\" \"cross-env NODE_ENV=dev npm run electron\"",
-    "packageWin": "electron-packager . oh-package --platform=win32 --arch=x64 --overwrite --electron-version=36.3.1 --out=build --icon=./public/logo.ico",
-    "packageMac": "electron-packager . oh-package --platform=darwin --arch=x64 --overwrite --electron-version=36.3.1 --out=build --icon=./public/logo.ico"
+    "package:win": "electron-builder build --win --x64",
+    "package:mac": "electron-builder build --mac --dir"
   },
   "eslintConfig": {
     "extends": [
@@ -48,7 +90,7 @@
     "@types/react": "^19.1.5",
     "cross-env": "^7.0.3",
     "electron": "^34.5.6",
-    "electron-packager": "^17.1.2",
+    "electron-builder": "^26.0.12",
     "electron-reloader": "^1.2.3"
   },
   "description": "鸿蒙安装工具",
