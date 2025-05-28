@@ -8,6 +8,8 @@ const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
 const iconPath = path.join(__dirname, './public/logo.ico')   //应用运行时的标题栏图标
+const hdcPath = getHdcPath();
+console.log('hdcPath:', hdcPath);
 
 function createWindow() {
     // Create the browser window.
@@ -74,14 +76,14 @@ function createWindow() {
             // 发送开始检查的消息
             mainWindow.webContents.send('hdc-status', '正在检查 hdc 环境变量...');
             // 执行 hdc -v 命令
-            const version = execSync('hdc -v');
+            const version = execSync(`${hdcPath} -v`);
             // 命令执行成功
             console.log(version.toString())
             console.log('hdc is ok')
             mainWindow.webContents.send('hdc-status', 'hdc is ok');
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
-            mainWindow.webContents.send('hdc-status', `检查 hdc 环境变量.`);
+            mainWindow.webContents.send('hdc-status', `error: 检查 hdc 环境变量.`);
         }
     });
 
@@ -117,14 +119,14 @@ function createWindow() {
                     const tmpDirPath = filePath.replace('.app', '');
                     console.log("send file.");
                     mainWindow.webContents.send('hdc-status', 'send file.');
-                    const sendOutput = execSync(`hdc file send ${tmpDirPath} data/local/tmp/`);
+                    const sendOutput = execSync(`${hdcPath} file send ${tmpDirPath} data/local/tmp/`);
                     console.log(sendOutput.toString())
                     console.log("install ...");
                     mainWindow.webContents.send('hdc-status', 'install ...');
-                    const installOutput = execSync(`hdc shell bm install -r -p data/local/tmp/${fileName}`);
+                    const installOutput = execSync(`${hdcPath} shell bm install -r -p data/local/tmp/${fileName}`);
                     console.log(installOutput.toString())
-                    execSync(`hdc shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
-                    execSync(`hdc shell rm -rf data/local/tmp/${fileName}`);
+                    execSync(`${hdcPath} shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
+                    execSync(`${hdcPath} shell rm -rf data/local/tmp/${fileName}`);
 
                     // clean up
                     if (fs.existsSync(tmpDirPath)) {
@@ -136,11 +138,12 @@ function createWindow() {
                 .on('error', (err) => {
                     console.error('解压过程中发生错误:', err);
                     fs.renameSync(zipFilePath, filePath);
+                    mainWindow.webContents.send('hdc-status', `error: 解压过程中发生错误: ${err}`);
                 });
 
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
-            mainWindow.webContents.send('hdc-status', `安装失败，${error}`);
+            mainWindow.webContents.send('hdc-status', `error: 安装失败，${error}`);
         }
     });
 
@@ -172,3 +175,24 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// 获取当前平台对应的HDC可执行文件路径
+function getHdcPath() {
+  let hdcDir;
+  if (process.env.NODE_ENV === 'dev') {
+    // 开发环境路径
+    hdcDir = path.join(__dirname, 'hdc');
+  } else {
+    // 生产环境路径（打包后）
+    hdcDir = path.join(process.resourcesPath, 'hdc');
+  }
+
+  const platform = process.platform;
+  if (platform === 'win32') {
+    return path.join(hdcDir, 'win', 'hdc.exe');
+  } else if (platform === 'darwin') {
+    return path.join(hdcDir, 'mac', 'hdc');
+  } else {
+    throw new Error(`不支持的平台: ${platform}`);
+  }
+}

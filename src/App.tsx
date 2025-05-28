@@ -134,7 +134,7 @@ const App: React.FC = () => {
       {/* HDC 状态显示区域 */}
       <div className="hdc-status">
         {hdcStatus && (
-          <div className={`status-message ${hdcStatus.includes('ok') ? 'success' : 'error'}`}>
+          <div className={`status-message ${hdcStatus.includes('error') ? 'error' : 'success'}`}>
             <span>{hdcStatus}</span>
           </div>
         )}
