@@ -26,22 +26,23 @@
       {
         "from": "hdc",
         "to": "hdc",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
       "target": [
-        "nsis",
-        "zip"
+        "nsis"
       ],
       "icon": "public/logo.ico"
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        "dmg"
       ],
-      "icon": "public/logo.icns"
+      "icon": "public/logo.icns",
+      "x64ArchFiles": "*"
     },
     "dmg": {
       "backgroundColor": "#fff"
@@ -67,7 +68,7 @@
     "electron": "electron .",
     "dev": "concurrently \"cross-env NODE_ENV=dev npm run start\" \"cross-env NODE_ENV=dev npm run electron\"",
     "package:win": "electron-builder build --win --x64",
-    "package:mac": "electron-builder build --mac --dir"
+    "package:mac": "electron-builder build --universal --mac --dir"
   },
   "eslintConfig": {
     "extends": [

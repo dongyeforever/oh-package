@@ -30,7 +30,9 @@ const App: React.FC = () => {
     // 监听 HDC 状态更新事件
     const handleHdcStatusUpdate = (event: CustomEvent) => {
       setHdcStatus(event.detail);
-      setIsCheckingHdc(false);
+      if (event.detail.includes('error') || event.detail.includes('install finished')) {
+        setIsCheckingHdc(false);
+      }
     };
     window.addEventListener('hdcStatusUpdate', handleHdcStatusUpdate);
 
@@ -63,13 +65,17 @@ const App: React.FC = () => {
       return;
     }
 
+    if  (isCheckingHdc) {
+      alert('安装中！');
+      return;
+    }
+
     try {
       setIsCheckingHdc(true);
       setHdcStatus('正在检查 hdc 环境变量...');
 
       // 执行 HDC 检查
-      const result = await window.electronAPI.checkHdc();
-      console.log('hdc 环境变量:', result);
+      await window.electronAPI.checkHdc();
 
       // HDC 检查成功后可以继续安装流程
       console.log('安装文件:', selectedFile, isOverwrite);

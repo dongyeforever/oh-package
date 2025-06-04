@@ -9,6 +9,7 @@ const unzip = require('unzipper');
 const fs = require('fs');
 const hdcPath = `"${getHdcPath()}"`;
 console.log('hdcPath:', hdcPath);
+const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
 
 function createWindow() {
     // Create the browser window.
@@ -88,63 +89,42 @@ function createWindow() {
     ipcMain.handle('install-app', async (event, filePath, isOverwrite) => {
         try {
             mainWindow.webContents.send('hdc-status', '开始安装应用...');
-            const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
+            // 停止 app
+            stopApp(isOverwrite);
             // 获取文件名和目录
             const fileDir = path.dirname(filePath);
-            const fileName = path.basename(filePath, '.app');
-            // 构建目标 ZIP 文件路径
-            const zipFilePath = path.join(fileDir, `${fileName}.zip`);
-            // 重命名文件为 ZIP
-            fs.renameSync(filePath, zipFilePath);
-            // 解压
-            fs.createReadStream(zipFilePath)
-                .pipe(unzip.Extract({ path: fileDir }))
-                .on('close', () => {
-                    console.log('解压完成！');
-                    fs.renameSync(zipFilePath, filePath);
-                    // 停止 app
-                    console.log("stop app.");
-                    execSync(`${hdcPath} shell aa force-stop ${PACKAGE_NAME}`);
+            if (filePath.endsWith('.app')) {
+                const fileName = path.basename(filePath, '.app');
+                // 构建目标 ZIP 文件路径
+                const zipFilePath = path.join(fileDir, `${fileName}.zip`);
+                // 重命名文件为 ZIP
+                fs.renameSync(filePath, zipFilePath);
+                // 解压
+                fs.createReadStream(zipFilePath)
+                    .pipe(unzip.Extract({ path: fileDir }))
+                    .on('close', () => {
+                        console.log('解压完成！');
+                        fs.renameSync(zipFilePath, filePath);
 
-                    if (isOverwrite) {
-                        // 卸载
-                        console.log("uninstall...");
-                        execSync(`${hdcPath} uninstall ${PACKAGE_NAME}`);
-                    }
-
-                    // 安装.app文件
-                    const tmpDirPath = filePath.replace('.app', '');
-                    console.log("send file.");
-                    mainWindow.webContents.send('hdc-status', 'send file.');
-                    const sendOutput = execSync(`${hdcPath} file send ${tmpDirPath} data/local/tmp/`);
-                    console.log(sendOutput.toString())
-                    if (sendOutput.toString().indexOf('Fail') > -1) {
-                        mainWindow.webContents.send('hdc-status', 'error: send file error.');
-                        return;
-                    }
-                    console.log("install ...");
-                    mainWindow.webContents.send('hdc-status', 'install ...');
-                    const installOutput = execSync(`${hdcPath} shell bm install -r -p data/local/tmp/${fileName}`);
-                    console.log(installOutput.toString())
-                    if (installOutput.toString().indexOf('Fail') > -1) {
-                        mainWindow.webContents.send('hdc-status', 'error: send file error.');
-                        return;
-                    }
-                    execSync(`${hdcPath} shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
-                    execSync(`${hdcPath} shell rm -rf data/local/tmp/${fileName}`);
-
-                    // clean up
-                    if (fs.existsSync(tmpDirPath)) {
-                        fs.rm(tmpDirPath, { recursive: true }, (err, data) => { });
-                    }
-                    console.log("app install finished.");
-                    mainWindow.webContents.send('hdc-status', 'app install finished.');
-                })
-                .on('error', (err) => {
-                    console.error('解压过程中发生错误:', err);
-                    fs.renameSync(zipFilePath, filePath);
-                    mainWindow.webContents.send('hdc-status', `error: 解压过程中发生错误: ${err}`);
-                });
+                        // 安装.app文件
+                        const tmpDirPath = filePath.replace('.app', '');
+                        installApp(mainWindow, tmpDirPath)
+                    })
+                    .on('error', (err) => {
+                        console.error('解压过程中发生错误:', err);
+                        fs.renameSync(zipFilePath, filePath);
+                        mainWindow.webContents.send('hdc-status', `error: 解压过程中发生错误: ${err}`);
+                    });
+            } else if (filePath.endsWith('.hap')) {
+                const fileName = path.basename(filePath, '.hap');
+                const tmpDirPath = `${fileDir}/tmp_${fileName}`
+                console.log('tmpDirPath:', tmpDirPath);
+                const targetFilePath = path.join(tmpDirPath, path.basename(filePath));
+                // 安装.app文件
+                fs.mkdirSync(tmpDirPath)
+                fs.cpSync(filePath, targetFilePath)
+                installApp(mainWindow, tmpDirPath)
+            }
 
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
@@ -178,26 +158,70 @@ app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
 
+function stopApp(isOverwrite) {
+    console.log("stop app.");
+    execSync(`${hdcPath} shell aa force-stop ${PACKAGE_NAME}`);
+
+    if (isOverwrite) {
+        // 卸载
+        console.log("uninstall...");
+        execSync(`${hdcPath} uninstall ${PACKAGE_NAME}`);
+    }
+}
+
+function installApp(mainWindow, tmpDirPath) {
+    console.log("send file.");
+    const reomteFileName = path.basename(tmpDirPath);
+    mainWindow.webContents.send('hdc-status', 'send file.');
+    const sendOutput = execSync(`${hdcPath} file send ${tmpDirPath} data/local/tmp/`);
+    console.log(sendOutput.toString())
+    if (sendOutput.toString().indexOf('Fail') > -1) {
+        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+        return;
+    }
+    console.log("install ...");
+    mainWindow.webContents.send('hdc-status', 'install ...');
+    const installOutput = execSync(`${hdcPath} shell bm install -r -p data/local/tmp/${reomteFileName}`);
+    console.log(installOutput.toString())
+    if (installOutput.toString().indexOf('Fail') > -1) {
+        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+        return;
+    }
+    execSync(`${hdcPath} shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
+    execSync(`${hdcPath} shell rm -rf data/local/tmp/${reomteFileName}`);
+    // clean up
+    if (tmpDirPath && fs.existsSync(tmpDirPath)) {
+        fs.rm(tmpDirPath, { recursive: true }, (err, data) => { });
+    }
+
+    console.log("app install finished.");
+    mainWindow.webContents.send('hdc-status', 'app install finished.');
+}
+
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
 // 获取当前平台对应的HDC可执行文件路径
 function getHdcPath() {
-  let hdcDir;
-  if (process.env.NODE_ENV === 'dev') {
-    // 开发环境路径
-    hdcDir = path.join(__dirname, 'hdc');
-  } else {
-    // 生产环境路径（打包后）
-    hdcDir = path.join(process.resourcesPath, 'hdc');
-  }
+    let hdcDir;
+    if (process.env.NODE_ENV === 'dev') {
+        // 开发环境路径
+        hdcDir = path.join(__dirname, 'hdc');
+    } else {
+        // 生产环境路径（打包后）
+        hdcDir = path.join(process.resourcesPath, 'hdc');
+    }
 
-  const platform = process.platform;
-  if (platform === 'win32') {
-    return path.join(hdcDir, 'win', 'hdc.exe');
-  } else if (platform === 'darwin') {
-    return path.join(hdcDir, 'mac', 'hdc');
-  } else {
-    throw new Error(`不支持的平台: ${platform}`);
-  }
+    const platform = process.platform;
+    if (platform === 'win32') {
+        return path.join(hdcDir, 'win', 'hdc.exe');
+    } else if (platform === 'darwin') {
+        if (process.arch === 'arm64') {
+            return path.join(hdcDir, 'mac/arm64', 'hdc');
+        } else {
+            return path.join(hdcDir, 'mac/x64', 'hdc');
+        }
+    } else {
+        throw new Error(`不支持的平台: ${platform}`);
+    }
 }
