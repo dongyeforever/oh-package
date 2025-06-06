@@ -1,0 +1,154 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title-container {
+  display: flex;
+}
+
+.title-wrapper {
+  flex: 1;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title-line {
+  width: 5px;
+  height: 32px;
+  background-color: #165DFF;
+  margin-right: 10px;
+}
+
+h2 {
+  font-size: 32px;
+  color: #333;
+  margin: 0;
+}
+
+.description {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #666;
+}
+
+.image-container {
+  flex: 1;
+  text-align: center;
+}
+
+.image-container img {
+  max-width: 100%;
+  height: auto;
+  max-width: 356px;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-top: -20px;
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); */
+}
+
+.path-selection .path-label {
+  display: block;
+  font-weight: bold;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.path-selection .input-container {
+  display: flex;
+  height: 40px;
+}
+
+.path-selection .input-container .path-input {
+  flex: 1;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+  font-size: 14px;
+  max-width: 500px;
+  color: #333;
+}
+
+.path-input:focus {
+  outline: none;
+  border-color: #165DFF;
+}
+
+.select-button {
+  width: 84px;
+  background-color: #165DFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.select-button:hover {
+  background-color: #0E42CC;
+}
+
+.select-button:active {
+  background-color: #0A3099;
+}
+
+.path-selection .input-container .path-label {
+  flex: 1;
+  font-size: 14px;
+  max-width: 500px;
+  color: #333;
+  font-weight: 400;
+}
+
+.text-link {
+  color: #165DFF;
+  border: none;
+  border-radius: 6px;
+  font-weight: 400;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 10px;
+}
+
+/* HDC 状态样式 */
+.hdc-status {
+  margin-top: 20px;
+  position: fixed;
+  bottom: 20px;
+}
+
+.status-message {
+  font-size: 13px;
+  display: inline-block;
+}
+
+.status-message.success {
+  color: #666666;
+}
+
+.status-message.error {
+  color: #c62828;
+}
+
+.hdc-status span {
+  display: inline-block;
+  white-space: nowrap; 
+  width: 100%; 
+  overflow: hidden;
+  text-overflow:ellipsis;
+}
