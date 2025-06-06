@@ -1,4 +1,11 @@
-项目结构：
+#### 使用 Yarn 的命令：
+- 安装依赖：yarn
+- 开发模式：yarn dev
+- 生产构建：yarn build
+- 打包应用：yarn package:mac
+
+
+#### 项目结构：
 
 electron-app/
 
@@ -30,9 +37,3 @@ electron-app/
 
 └── yarn.lock
 
-
-#### 使用 Yarn 的命令：
-- 安装依赖：yarn
-- 开发模式：yarn dev
-- 生产构建：yarn build
-- 打包应用：yarn package:mac
