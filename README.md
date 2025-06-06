@@ -5,17 +5,29 @@ electron-app/
 ├── public/
 
 │   └── index.html
+
 ├── src/
+
 │   ├── main/               # Electron 主进程代码
+
 │   │   └── index.js
+
 │   └── renderer/            # React 渲染进程代码
+
 │       ├── App.tsx
+
 │       ├── index.tsx
+
 │       └── components/
+
 ├── package.json
+
 ├── tsconfig.json
+
 ├── webpack.main.ts      # 主进程打包配置
+
 ├── ebpack.renderer.ts  # 渲染进程打包配置
+
 └── yarn.lock
 
 
