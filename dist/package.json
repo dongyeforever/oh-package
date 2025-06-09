@@ -16,7 +16,9 @@
       "output": "release"
     },
     "files": [
-      "dist/**/*"
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
     ],
     "extraResources": [
       {
@@ -29,7 +31,7 @@
     ],
     "win": {
       "target": [
-        "portable"
+        "nsis"
       ],
       "icon": "public/logo.ico"
     },
@@ -49,9 +51,9 @@
     "dev": "concurrently \"webpack --config webpack.renderer.js --mode=development --watch\" \"webpack --config webpack.main.js --mode=development --watch\" \"wait-on dist/main.js && yarn build:after && electron .\"",
     "start": "concurrently \"webpack --config webpack.renderer.js --watch\" \"webpack --config webpack.main.js --watch\" \"wait-on dist/main.js && yarn build:after && electron .\"",
     "build": "webpack --config webpack.renderer.js --mode production && webpack --config webpack.main.js --mode production && yarn build:after",
-    "build:after": "concurrently \"cp -r hdc ./dist/\" \"cp ./src/main/preload.js ./dist/\" \"cp ./public/logo*.* ./dist/\"",
+    "build:after": "concurrently \"cp -r hdc ./dist/\" \"cp ./src/main/preload.js ./dist/\" \"cp ./public/logo*.* ./dist/\" \"cp ./package.json ./dist/\" ",
     "dist": "yarn build && electron-builder",
-    "package:win": "electron-builder build --win --ia32",
+    "package:win": "electron-builder build --win --x64",
     "package:mac": "electron-builder build --mac --dir",
     "package:mac2": "electron-builder build --universal --mac --dir"
   },

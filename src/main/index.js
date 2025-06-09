@@ -7,7 +7,6 @@ const { execSync } = require('child_process');
 const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
-const { time } = require('console');
 const hdcPath = `"${getHdcPath()}"`;
 console.log('hdcPath:', hdcPath);
 const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
@@ -148,7 +147,8 @@ function createWindow() {
             const matchResult = output.match(pattern)
             if (matchResult && matchResult[1]) {
                 const imagePath = matchResult[1]
-                execSync(`${hdcPath} file recv ${imagePath} ~/Desktop/`);
+                const desktopPath = app.getPath('desktop');
+                execSync(`${hdcPath} file recv ${imagePath} ${desktopPath}`);
             }
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
