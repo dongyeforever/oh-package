@@ -10,11 +10,13 @@ declare global {
       checkHdc: () => Promise<string>
       installApp: (filePath: string, isOverwrite: boolean) => Promise<string | undefined>
       snapshot: () => Promise<string | undefined>
+      saveConfig: (config: { optionUnInstall: boolean, optionOsHdc: boolean }) => void
     };
   }
 
   // 定义状态更新事件
   interface WindowEventMap {
+    'configStatusUpdate': CustomEvent<{ optionUnInstall: boolean, optionOsHdc: boolean }>;
     'hdcStatusUpdate': CustomEvent<string>;
     'installStatusUpdate': CustomEvent<string>;
   }
@@ -22,12 +24,20 @@ declare global {
 
 const App: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState('');
-  const [isOverwrite, setIsOverwrite] = useState(false);
   const [hdcStatus, setHdcStatus] = useState('');
   const [isCheckingHdc, setIsCheckingHdc] = useState(false);
   const [installStatus, setInstallStatus] = useState('');
+  const [config, setConfig] = useState({
+    optionUnInstall: false,
+    optionOsHdc: false
+  })
 
   useEffect(() => {
+    const configStatusUpdate = (event: CustomEvent) => {
+      console.log('configStatusUpdate', event);
+      setConfig(event.detail)
+    }
+    window.addEventListener('configStatusUpdate', configStatusUpdate);
     // 监听 HDC 状态更新事件
     const handleHdcStatusUpdate = (event: CustomEvent) => {
       setHdcStatus(event.detail);
@@ -44,10 +54,16 @@ const App: React.FC = () => {
     window.addEventListener('installStatusUpdate', handleInstallStatusUpdate);
 
     return () => {
+      window.removeEventListener('configStatusUpdate', configStatusUpdate);
       window.removeEventListener('hdcStatusUpdate', handleHdcStatusUpdate);
       window.removeEventListener('installStatusUpdate', handleInstallStatusUpdate);
     };
   }, []);
+
+  // 保存配置
+  const handleSaveConfig = () => {
+    window.electronAPI.saveConfig(config);
+  };
   const selectFile = async () => {
     try {
       // 调用预加载脚本中暴露的 Electron API
@@ -78,9 +94,9 @@ const App: React.FC = () => {
       await window.electronAPI.checkHdc();
 
       // HDC 检查成功后可以继续安装流程
-      console.log('安装文件:', selectedFile, isOverwrite);
+      console.log('安装文件:', selectedFile, config.optionUnInstall);
       // 这里可以添加实际的安装逻辑
-      await window.electronAPI.installApp(selectedFile, isOverwrite);
+      await window.electronAPI.installApp(selectedFile, config.optionUnInstall);
     } catch (error) {
       console.error('安装失败:', error);
     }
@@ -94,6 +110,12 @@ const App: React.FC = () => {
       console.error('Error Snapshot:', error);
     }
   };
+
+  // 处理勾选变化
+  const handleConfigChange = async (config: { optionUnInstall: boolean, optionOsHdc: boolean }) => {
+    setConfig(config)
+    await window.electronAPI.saveConfig(config);
+  }
 
   return (
     <div className="container">
@@ -138,14 +160,35 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* 新增覆盖安装选项 */}
+      {/* 覆盖安装选项 */}
       <div className="path-selection">
         <div className="input-container">
           <label className="path-label"> <input
             type="checkbox"
-            checked={isOverwrite}
-            onChange={(e) => setIsOverwrite(e.target.checked)}
+            checked={config.optionUnInstall}
+            onChange={(e) => {
+              handleConfigChange({
+                ...config,
+                optionUnInstall: e.target.checked
+              })
+            }}
           />安装前卸载app </label>
+        </div>
+      </div>
+
+      {/* hdc 环境变量选项 */}
+      <div className="path-selection">
+        <div className="input-container">
+          <label className="path-label"> <input
+            type="checkbox"
+            checked={config.optionOsHdc}
+            onChange={(e) => {
+              handleConfigChange({
+                ...config,
+                optionOsHdc: e.target.checked
+              })
+            }}
+          />使用系统hdc</label>
         </div>
       </div>
 

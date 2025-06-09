@@ -2,14 +2,31 @@
 // app 控制应用程序的事件生命周期。事件调用app.on('eventName', callback)，方法调用app.functionName(arg)
 // BrowserWindow 创建和控制浏览器窗口。new BrowserWindow([options]) 事件和方法调用同app
 // Electron参考文档 https://www.electronjs.org/docs
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
 const { execSync } = require('child_process');
 const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
-const hdcPath = `"${getHdcPath()}"`;
+
+// 配置文件路径
+const configPath = path.join(app.getPath('userData'), 'config.json');
+const savedConfig = loadConfig();
+console.log(configPath, savedConfig);
+let hdcPath = savedConfig.optionOsHdc === true ? getOsHdcPath() : getAppHdcPath()
 console.log('hdcPath:', hdcPath);
 const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
+
+// 读取配置
+function loadConfig() {
+    try {
+        if (fs.existsSync(configPath)) {
+            return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+    } catch (error) {
+        console.error('Failed to load config:', error);
+    }
+    return {};
+}
 
 function createWindow() {
     // Create the browser window.
@@ -26,11 +43,11 @@ function createWindow() {
             nodeIntegration: true // 是否启用node集成 渲染进程的内容有访问node的能力,建议设置为true, 否则在render页面会提示node找不到的错误
         }
     })
-
+    // 去掉菜单栏
+    Menu.setApplicationMenu(null)
 
     // 加载应用 --打包react应用后，__dirname为当前文件路径
     console.log('__dirname: ', __dirname)
-    console.log('process.env.NODE_ENV: ', process.env.NODE_ENV)
     if (process.env.NODE_ENV === 'production') {
         mainWindow.loadFile(path.join(__dirname, './index.html'));
     } else {
@@ -53,6 +70,23 @@ function createWindow() {
     // 当窗口关闭时发出。在你收到这个事件后，你应该删除对窗口的引用，并避免再使用它。
     mainWindow.on('closed', () => {
         // mainWindow = null;
+    });
+
+    // 监听来自渲染进程的配置保存事件
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.webContents.send('load-config', savedConfig);
+    });
+
+    // 监听来自渲染进程的保存配置消息
+    ipcMain.handle('save-config', async (event, config) => {
+        try {
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // 修改 hdc 路径
+            hdcPath = config.optionOsHdc === true ? getOsHdcPath() : getAppHdcPath()
+        } catch (error) {
+            console.error('Failed to save config:', error);
+        }
     });
 
     // 处理文件选择请求
@@ -226,7 +260,27 @@ function installApp(mainWindow, tmpDirPath) {
 // code. You can also put them in separate files and require them here.
 
 // 获取当前平台对应的HDC可执行文件路径
-function getHdcPath() {
+function getOsHdcPath() {
+    let envHdcPath = '';
+    try {
+        // 在 Windows 平台使用 where 命令查找 hdc 可执行文件
+        if (process.platform === 'win32') {
+            const output = execSync('where hdc', { stdio: 'pipe' }).toString().trim();
+            if (output && fs.existsSync(output)) {
+                envHdcPath = output;
+            }
+        } else {
+            // 非 Windows 平台使用 which 命令
+            envHdcPath = execSync('which hdc', { stdio: 'pipe' }).toString().trim();
+        }
+    } catch (e) {
+        // 如果命令执行失败，说明环境变量中没有 hdc
+        envHdcPath = '';
+    }
+    return envHdcPath;
+}
+// 获取app内置HDC可执行文件路径
+function getAppHdcPath() {
     let hdcDir;
     if (process.env.NODE_ENV === 'production') {
         // 生产环境路径（打包后）

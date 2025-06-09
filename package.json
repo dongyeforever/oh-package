@@ -1,7 +1,7 @@
 {
   "name": "electron-app",
   "author": "Rui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "鸿蒙安装工具",
   "repository": "git@github.com:dongyeforever/oh-package.git",
   "license": "MIT",
