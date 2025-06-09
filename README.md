@@ -15,12 +15,10 @@ yarn dev
 **打包应用**
 ```shell
 yarn build
-// macOS 
-yarn package:mac
-// macOS universal包
-yarn package:mac2
-// windows
-yarn package:win
+
+yarn package:mac  // macOS 
+yarn package:mac2 // macOS universal包
+yarn package:win  // windows
 ```
 
 #### 项目结构：
