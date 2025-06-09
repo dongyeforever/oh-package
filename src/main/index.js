@@ -12,7 +12,7 @@ const fs = require('fs');
 const configPath = path.join(app.getPath('userData'), 'config.json');
 const savedConfig = loadConfig();
 console.log(configPath, savedConfig);
-let hdcPath = savedConfig.optionOsHdc === true ? getOsHdcPath() : getAppHdcPath()
+let hdcPath = (savedConfig && savedConfig.optionOsHdc === true) ? `"${getOsHdcPath()}"` : `"${getAppHdcPath()}"`
 console.log('hdcPath:', hdcPath);
 const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
 

@@ -34,7 +34,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const configStatusUpdate = (event: CustomEvent) => {
-      console.log('configStatusUpdate', event);
+      // console.log('configStatusUpdate', event);
       setConfig(event.detail)
     }
     window.addEventListener('configStatusUpdate', configStatusUpdate);
@@ -60,10 +60,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // 保存配置
-  const handleSaveConfig = () => {
-    window.electronAPI.saveConfig(config);
-  };
   const selectFile = async () => {
     try {
       // 调用预加载脚本中暴露的 Electron API
