@@ -1,39 +1,47 @@
-#### 使用 Yarn 的命令：
-- 安装依赖：yarn
-- 开发模式：yarn dev
-- 生产构建：yarn build
-- 打包应用：yarn package:mac
+HarmonyOS Package Tool 是鸿蒙系统包安装工具，基于开源 OpenHarmony 项目的 hdc 工具一键自动安装到模拟器与真机。
 
+#### 使用 Yarn 的命令：
+
+**安装依赖：**
+```shell
+yarn install
+```
+
+**开发模式**
+```shell
+yarn dev
+```
+
+**打包应用**
+```shell
+yarn build
+// macOS 
+yarn package:mac
+// macOS universal包
+yarn package:mac2
+// windows
+yarn package:win
+```
 
 #### 项目结构：
 
+```html
 electron-app/
-
+├── hdc/
 ├── public/
-
 │   └── index.html
-
 ├── src/
-
 │   ├── main/               # Electron 主进程代码
-
 │   │   └── index.js
-
+│   │   └── preload.js
 │   └── renderer/            # React 渲染进程代码
-
 │       ├── App.tsx
-
 │       ├── index.tsx
-
 │       └── components/
-
 ├── package.json
-
 ├── tsconfig.json
-
 ├── webpack.main.ts      # 主进程打包配置
-
-├── ebpack.renderer.ts  # 渲染进程打包配置
-
+├── webpack.renderer.ts  # 渲染进程打包配置
 └── yarn.lock
+```
 
