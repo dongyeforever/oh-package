@@ -1,0 +1,27 @@
+/* HDC 状态样式 */
+.hdc-status {
+    margin-top: 20px;
+    position: fixed;
+    bottom: 20px;
+}
+
+.status-message {
+    font-size: 13px;
+    display: inline-block;
+}
+
+.status-message.success {
+    color: #666666;
+}
+
+.status-message.error {
+    color: #c62828;
+}
+
+.hdc-status span {
+    display: inline-block;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

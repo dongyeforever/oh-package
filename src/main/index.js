@@ -3,7 +3,7 @@
 // BrowserWindow 创建和控制浏览器窗口。new BrowserWindow([options]) 事件和方法调用同app
 // Electron参考文档 https://www.electronjs.org/docs
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const path = require('path');
 const unzip = require('unzipper');
 const fs = require('fs');
@@ -15,6 +15,7 @@ console.log(configPath, savedConfig);
 let hdcPath = (savedConfig && savedConfig.optionOsHdc === true) ? `"${getOsHdcPath()}"` : `"${getAppHdcPath()}"`
 console.log('hdcPath:', hdcPath);
 const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
+let recordingVideoName = "";
 
 // 读取配置
 function loadConfig() {
@@ -115,17 +116,17 @@ function createWindow() {
             // 命令执行成功
             console.log(version.toString())
             console.log('hdc is ok')
-            mainWindow.webContents.send('hdc-status', 'hdc is ok');
+            mainWindow.webContents.send('hdc-status', { message: 'hdc is ok' });
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
-            mainWindow.webContents.send('hdc-status', `error: 检查 hdc 环境变量.`);
+            mainWindow.webContents.send('hdc-status', { message: 'error: 检查 hdc 环境变量.' });
         }
     });
 
     // 执行应用安装命令
     ipcMain.handle('install-app', async (event, filePath, isOverwrite) => {
         try {
-            mainWindow.webContents.send('hdc-status', '开始安装应用...');
+            mainWindow.webContents.send('hdc-status', { message: '开始安装应用...' });
             // 停止 app
             stopApp(isOverwrite);
             // 获取文件名和目录
@@ -150,7 +151,7 @@ function createWindow() {
                     .on('error', (err) => {
                         console.error('解压过程中发生错误:', err);
                         fs.renameSync(zipFilePath, filePath);
-                        mainWindow.webContents.send('hdc-status', `error: 解压过程中发生错误: ${err}`);
+                        mainWindow.webContents.send('hdc-status', { message: `error: 解压过程中发生错误: ${err}` });
                     });
             } else if (filePath.endsWith('.hap')) {
                 const fileName = path.basename(filePath, '.hap');
@@ -165,7 +166,7 @@ function createWindow() {
 
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
-            mainWindow.webContents.send('hdc-status', `error: 安装失败，${error}`);
+            mainWindow.webContents.send('hdc-status', { message: `error: 安装失败，${error}` });
         }
     });
 
@@ -173,23 +174,68 @@ function createWindow() {
     ipcMain.handle('hdc-snapshot', async () => {
         try {
             // 执行 `hdc shell snapshot_display` 命令
-            const result = execSync(`${hdcPath} shell snapshot_display`)
+            const device = execSync(`${hdcPath} list targets | head -n 1`).toString().trim().replace(/[\n\r]/g, '');
+            const result = execSync(`${hdcPath}  -t ${device} shell snapshot_display`)
             const output = result.toString();
             // 命令执行成功
             console.log(output)
             const pattern = /success:\s+.+?write to\s+([^\s]+)/
             const matchResult = output.match(pattern)
-            if (matchResult && matchResult[1]) {
-                const imagePath = matchResult[1]
+            if (matchResult && matchResult[0]) {
+                const imagePath = matchResult[0]
                 const desktopPath = app.getPath('desktop');
                 execSync(`${hdcPath} file recv ${imagePath} ${desktopPath}`);
+                mainWindow.webContents.send('hdc-status', { message: `截屏已发送到桌面 > ${path.basename(imagePath)}`, animate: true });
             }
         } catch (error) {
             console.error(`命令执行错误: ${error}`);
-            mainWindow.webContents.send('hdc-status', `error: 检查 hdc 环境变量.`);
+            mainWindow.webContents.send('hdc-status', { message: 'error: 检查 hdc 环境变量.' });
         }
     });
 
+    // 录屏
+    ipcMain.handle('hdc-start-record', async () => {
+        try {
+            // 执行 `hdc shell` 命令
+            recordingVideoName = `sohu_${Date.now()}.mp4`
+            const device = execSync(`${hdcPath} list targets | head -n 1`).toString().trim().replace(/[\n\r]/g, '');
+            exec(`${hdcPath} -t ${device} shell aa start -b com.huawei.hmos.screenrecorder -a com.huawei.hmos.screenrecorder.ServiceExtAbility --ps "CustomizedFileName" ${recordingVideoName}`, (error, stdout, stderr) => {
+                const output = stdout.toString();
+                // 命令执行成功
+                console.log(output)
+            })
+        } catch (error) {
+            console.error(`命令执行错误: ${error}`);
+            mainWindow.webContents.send('hdc-status', { message: 'error: 检查 hdc 环境变量.' });
+        }
+    });
+
+    // 停止录屏
+    ipcMain.handle('hdc-stop-record', async () => {
+        try {
+            // 执行 `hdc shell` 命令
+            console.log(`hdc-stop-record: ${recordingVideoName}`);
+            exec(`${hdcPath} shell aa start -b com.huawei.hmos.screenrecorder -a com.huawei.hmos.screenrecorder.ServiceExtAbility`, (error, stdout, stderr) => {
+                const output = stdout.toString();
+                // 命令执行成功
+                console.log(output)
+                // 查询录屏文件位置(官方文档的命令，实际查询不到文件)
+                const searchResult = execSync(`${hdcPath} shell mediatool query ${recordingVideoName}`).toString()
+                // 复制录屏文件位置的视频
+                const pattern = /\/storage\/.*\.mp4/
+                const matchResult = searchResult.match(pattern)
+                console.log(matchResult[0])
+                if (matchResult && matchResult[0]) {
+                    const videoPath = matchResult[0]
+                    const desktopPath = app.getPath('desktop');
+                    execSync(`${hdcPath} file recv ${videoPath} ${desktopPath}`);
+                }
+            })
+        } catch (error) {
+            console.error(`命令执行错误: ${error}`);
+            mainWindow.webContents.send('hdc-status', { message: 'error: 检查 hdc 环境变量.' });
+        }
+    });
 }
 
 app.allowRendererProcessReuse = true;
@@ -230,19 +276,19 @@ function stopApp(isOverwrite) {
 function installApp(mainWindow, tmpDirPath) {
     console.log("send file.");
     const reomteFileName = path.basename(tmpDirPath);
-    mainWindow.webContents.send('hdc-status', 'send file.');
+    mainWindow.webContents.send('hdc-status', { message: 'send file.' });
     const sendOutput = execSync(`${hdcPath} file send ${tmpDirPath} data/local/tmp/`);
     console.log(sendOutput.toString())
     if (sendOutput.toString().indexOf('Fail') > -1) {
-        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+        mainWindow.webContents.send('hdc-status', { message: 'error: send file error.' });
         return;
     }
     console.log("install ...");
-    mainWindow.webContents.send('hdc-status', 'install ...');
+    mainWindow.webContents.send('hdc-status', { message: 'install ...' });
     const installOutput = execSync(`${hdcPath} shell bm install -r -p data/local/tmp/${reomteFileName}`);
     console.log(installOutput.toString())
     if (installOutput.toString().indexOf('Fail') > -1) {
-        mainWindow.webContents.send('hdc-status', 'error: send file error.');
+        mainWindow.webContents.send('hdc-status', { message: 'error: send file error.' });
         return;
     }
     execSync(`${hdcPath} shell aa start -a AppAbility -b ${PACKAGE_NAME} -m app`);
@@ -253,7 +299,7 @@ function installApp(mainWindow, tmpDirPath) {
     }
 
     console.log("app install finished.");
-    mainWindow.webContents.send('hdc-status', 'app install finished.');
+    mainWindow.webContents.send('hdc-status', { message: 'app install finished.' });
 }
 
 // In this file you can include the rest of your app's specific main process

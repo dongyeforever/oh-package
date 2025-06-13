@@ -6,7 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   checkHdc: () => ipcRenderer.invoke('check-hdc'),
   installApp: (filePath, isOverwrite) => ipcRenderer.invoke('install-app', filePath, isOverwrite),
-  snapshot: () => ipcRenderer.invoke('hdc-snapshot')
+  snapshot: () => ipcRenderer.invoke('hdc-snapshot'),
+  startScreenRecord: () => ipcRenderer.invoke('hdc-start-record'),
+  stopScreenRecord: () => ipcRenderer.invoke('hdc-stop-record')
 });
 
 // load config 状态改变

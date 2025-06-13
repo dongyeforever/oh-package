@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import AnimatedStatus from './component/AnimatedStatus';
 const navbarIcon = require('../image/navbar.png');
 
 // 为 window.electronAPI 添加类型定义
@@ -10,6 +11,8 @@ declare global {
       checkHdc: () => Promise<string>
       installApp: (filePath: string, isOverwrite: boolean) => Promise<string | undefined>
       snapshot: () => Promise<string | undefined>
+      startScreenRecord: () => Promise<string | undefined>
+      stopScreenRecord: () => Promise<string | undefined>
       saveConfig: (config: { optionUnInstall: boolean, optionOsHdc: boolean }) => void
     };
   }
@@ -23,8 +26,10 @@ declare global {
 }
 
 const App: React.FC = () => {
+  const [isRecording, setIsRecording] = useState(false);
   const [selectedFile, setSelectedFile] = useState('');
   const [hdcStatus, setHdcStatus] = useState('');
+  const [hdcStatusAnimate, setHdcStatusAnimate] = useState(false);
   const [isCheckingHdc, setIsCheckingHdc] = useState(false);
   const [installStatus, setInstallStatus] = useState('');
   const [config, setConfig] = useState({
@@ -40,8 +45,10 @@ const App: React.FC = () => {
     window.addEventListener('configStatusUpdate', configStatusUpdate);
     // 监听 HDC 状态更新事件
     const handleHdcStatusUpdate = (event: CustomEvent) => {
-      setHdcStatus(event.detail);
-      if (event.detail.includes('error') || event.detail.includes('install finished')) {
+      const message = event.detail.message;
+      setHdcStatus(message);
+      setHdcStatusAnimate(event.detail.animate)
+      if (message.includes('error') || message.includes('install finished')) {
         setIsCheckingHdc(false);
       }
     };
@@ -107,6 +114,22 @@ const App: React.FC = () => {
     }
   };
 
+  const handleScreenRecord = async () => {
+    try {
+      // 调用预加载脚本中暴露的 Electron API
+      console.log("handleScreenRecord isRecording", isRecording)
+      if (isRecording) {
+        setIsRecording(!isRecording)
+        await window.electronAPI.stopScreenRecord()
+      } else {
+        setIsRecording(!isRecording)
+        await window.electronAPI.startScreenRecord()
+      }
+    } catch (error) {
+      console.error('Error Record:', error);
+    }
+  };
+
   // 处理勾选变化
   const handleConfigChange = async (config: { optionUnInstall: boolean, optionOsHdc: boolean }) => {
     setConfig(config)
@@ -127,6 +150,8 @@ const App: React.FC = () => {
           </p>
 
           <button onClick={handleSnapshot} className='text-link'>截屏</button>
+
+          <button onClick={handleScreenRecord} className='text-link' style={{ display: 'none' }}>{isRecording ? "停止录屏" : "录屏"}</button>
         </div>
         <div className="image-container">
           <img src={navbarIcon} alt="HarmonyOS Package Tool" />
@@ -189,13 +214,7 @@ const App: React.FC = () => {
       </div>
 
       {/* HDC 状态显示区域 */}
-      <div className="hdc-status">
-        {hdcStatus && (
-          <div className={`status-message ${hdcStatus.includes('error') ? 'error' : 'success'}`}>
-            <span>{hdcStatus}</span>
-          </div>
-        )}
-      </div>
+      <AnimatedStatus hdcStatus={hdcStatus} animate={hdcStatusAnimate} />
 
     </div>
   );
