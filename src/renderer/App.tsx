@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import AnimatedStatus from './component/AnimatedStatus';
-const navbarIcon = require('../image/navbar.png');
+import ImageDoubleClick from './component/ImageDoubleClick';
 
 // 为 window.electronAPI 添加类型定义
 declare global {
@@ -10,6 +10,7 @@ declare global {
       openFile: () => Promise<string | undefined>
       checkHdc: () => Promise<string>
       installApp: (filePath: string, isOverwrite: boolean) => Promise<string | undefined>
+      adbSnapshot: () => Promise<string | undefined>
       snapshot: () => Promise<string | undefined>
       startScreenRecord: () => Promise<string | undefined>
       stopScreenRecord: () => Promise<string | undefined>
@@ -48,7 +49,7 @@ const App: React.FC = () => {
       const message = event.detail.message;
       setHdcStatus(message);
       setHdcStatusAnimate(event.detail.animate)
-      if (message.includes('error') || message.includes('install finished')) {
+      if (message && (message.includes('error') || message.includes('install finished'))) {
         setIsCheckingHdc(false);
       }
     };
@@ -130,6 +131,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAdbSnapshot = async () => {
+    try {
+      // 调用预加载脚本中暴露的 Electron API
+      await window.electronAPI.adbSnapshot();
+    } catch (error) {
+      console.error('Error Snapshot:', error);
+    }
+  };
+
   // 处理勾选变化
   const handleConfigChange = async (config: { optionUnInstall: boolean, optionOsHdc: boolean }) => {
     setConfig(config)
@@ -154,7 +164,7 @@ const App: React.FC = () => {
           <button onClick={handleScreenRecord} className='text-link' style={{ display: 'none' }}>{isRecording ? "停止录屏" : "录屏"}</button>
         </div>
         <div className="image-container">
-          <img src={navbarIcon} alt="HarmonyOS Package Tool" />
+          <ImageDoubleClick onDoubleClick={handleAdbSnapshot} />
         </div>
       </div>
 

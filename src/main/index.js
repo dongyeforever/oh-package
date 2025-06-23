@@ -14,6 +14,7 @@ const savedConfig = loadConfig();
 console.log(configPath, savedConfig);
 let hdcPath = (savedConfig && savedConfig.optionOsHdc === true) ? `"${getOsHdcPath()}"` : `"${getAppHdcPath()}"`
 console.log('hdcPath:', hdcPath);
+const adbPath = `"${getAppAdbPath()}"`
 const PACKAGE_NAME = "com.sohu.sohuvideoharmony";
 let recordingVideoName = "";
 
@@ -236,6 +237,24 @@ function createWindow() {
             mainWindow.webContents.send('hdc-status', { message: 'error: 检查 hdc 环境变量.' });
         }
     });
+
+    // 截屏
+    ipcMain.handle('adb-snapshot', async () => {
+        try {
+            // 执行 `hdc shell snapshot_display` 命令
+            const fileName = `snapshot_${Date.now()}.png`
+            const result = execSync(`${adbPath} shell screencap -p /data/local/tmp/${fileName}`)
+            console.log(result.toString())
+            const desktopPath = app.getPath('desktop');
+            const output = execSync(`${adbPath} pull /data/local/tmp/${fileName} ${desktopPath}`)
+            // 命令执行成功
+            console.log(output.toString())
+            mainWindow.webContents.send('hdc-status', { message: `截屏已发送到桌面 > ${fileName}`, animate: true });
+        } catch (error) {
+            console.error(`命令执行错误: ${error}`);
+            mainWindow.webContents.send('hdc-status', { message: 'error: 检查 adb 环境变量.' });
+        }
+    });
 }
 
 app.allowRendererProcessReuse = true;
@@ -344,6 +363,31 @@ function getAppHdcPath() {
             return path.join(hdcDir, 'mac/arm64', 'hdc');
         } else {
             return path.join(hdcDir, 'mac/x64', 'hdc');
+        }
+    } else {
+        throw new Error(`不支持的平台: ${platform}`);
+    }
+}
+
+// 获取app内置adb可执行文件路径
+function getAppAdbPath() {
+    let hdcDir;
+    if (process.env.NODE_ENV === 'production') {
+        // 生产环境路径（打包后）
+        hdcDir = path.join(process.resourcesPath, 'hdc');
+    } else {
+        // 开发环境路径
+        hdcDir = path.join(__dirname, 'hdc');
+    }
+
+    const platform = process.platform;
+    if (platform === 'win32') {
+        return path.join(hdcDir, 'win', 'adb.exe');
+    } else if (platform === 'darwin') {
+        if (process.arch === 'arm64') {
+            return path.join(hdcDir, 'mac/arm64', 'adb');
+        } else {
+            return path.join(hdcDir, 'mac/x64', 'adb');
         }
     } else {
         throw new Error(`不支持的平台: ${platform}`);
