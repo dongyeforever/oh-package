@@ -156,7 +156,7 @@ const App: React.FC = () => {
             <h2>关于</h2>
           </div>
           <p className="description">
-            HarmonyOS Package Tool 是鸿蒙系统包安装工具，支持一键自动安装到模拟器与真机。
+            HarmonyOS Tool 是鸿蒙系统包安装工具，支持一键自动安装到模拟器与真机。
           </p>
 
           <button onClick={handleSnapshot} className='text-link'>截屏</button>

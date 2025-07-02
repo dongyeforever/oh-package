@@ -45,7 +45,7 @@ const ImageDoubleClick: React.FC<ImageDoubleClickProps> = ({ src, onDoubleClick}
 
     return (
         <div>
-            <img src={navbarIcon} alt="HarmonyOS Package Tool" onClick={handleClick} />
+            <img src={navbarIcon} alt="HarmonyOS Tool" onClick={handleClick} />
         </div>
     );
 };

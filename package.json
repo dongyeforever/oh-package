@@ -1,13 +1,13 @@
 {
-  "name": "electron-app",
+  "name": "harmonyos-tool",
   "author": "Rui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "鸿蒙安装工具",
   "repository": "git@github.com:dongyeforever/oh-package.git",
   "license": "MIT",
   "main": "dist/main.js",
   "build": {
-    "productName": "HarmonyOS Package Tool",
+    "productName": "harmonyos-tool",
     "appId": "vip.lovek.oh-package",
     "icon": "public/logo.png",
     "artifactName": "${productName}-${version}.${ext}",

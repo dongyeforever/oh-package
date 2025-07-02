@@ -1,4 +1,4 @@
-HarmonyOS Package Tool 是鸿蒙系统包安装工具，基于开源 OpenHarmony 项目的 hdc 工具一键自动安装到模拟器与真机。
+HarmonyOS Tool 是鸿蒙系统包安装工具，基于开源 OpenHarmony 项目的 hdc 工具一键自动安装到模拟器与真机。
 
 
 ![截图](https://github.com/dongyeforever/oh-package/blob/main/screenshot/screenshort.png)
