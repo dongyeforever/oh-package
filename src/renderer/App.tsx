@@ -161,7 +161,7 @@ const App: React.FC = () => {
 
           <button onClick={handleSnapshot} className='text-link'>截屏</button>
 
-          <button onClick={handleScreenRecord} className='text-link' style={{ display: 'none' }}>{isRecording ? "停止录屏" : "录屏"}</button>
+          <button onClick={handleScreenRecord} className='text-link'>{isRecording ? "停止录屏" : "录屏"}</button>
         </div>
         <div className="image-container">
           <ImageDoubleClick onDoubleClick={handleAdbSnapshot} />

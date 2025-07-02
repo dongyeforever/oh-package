@@ -214,22 +214,35 @@ function createWindow() {
     // 停止录屏
     ipcMain.handle('hdc-stop-record', async () => {
         try {
-            // 执行 `hdc shell` 命令
+            // 1.执行 `hdc shell` 命令
             console.log(`hdc-stop-record: ${recordingVideoName}`);
             exec(`${hdcPath} shell aa start -b com.huawei.hmos.screenrecorder -a com.huawei.hmos.screenrecorder.ServiceExtAbility`, (error, stdout, stderr) => {
                 const output = stdout.toString();
                 // 命令执行成功
                 console.log(output)
-                // 查询录屏文件位置(官方文档的命令，实际查询不到文件)
-                const searchResult = execSync(`${hdcPath} shell mediatool query ${recordingVideoName}`).toString()
-                // 复制录屏文件位置的视频
-                const pattern = /\/storage\/.*\.mp4/
-                const matchResult = searchResult.match(pattern)
-                console.log(matchResult[0])
-                if (matchResult && matchResult[0]) {
-                    const videoPath = matchResult[0]
-                    const desktopPath = app.getPath('desktop');
-                    execSync(`${hdcPath} file recv ${videoPath} ${desktopPath}`);
+                // 2.查询录屏文件位置
+                const searchResult = execSync(`${hdcPath} shell mediatool query ${recordingVideoName} -u`).toString()
+                const regex = /(file:\/\/[^"\s]+)/;
+                const match = searchResult.match(regex);
+                let recordPath = ''
+                if (match && match[1]) {
+                    recordPath = match[1]
+                    console.log('提取的文件位置：', recordPath)
+                    // 将录屏文件复制到有下载权限的路径中
+                    const copyResult = execSync(`${hdcPath} shell mediatool recv ${recordPath} /data/local/tmp`).toString()
+                    console.log(copyResult)
+                    // 复制录屏文件位置的视频
+                    const pattern = /\/data\/local\/tmp\/sohu_.*\.mp4/
+                    const matchResult = copyResult.match(pattern)
+                    console.log(matchResult[0])
+                    if (matchResult && matchResult[0]) {
+                        recordPath = matchResult[0]
+                    }
+                    // 3.下载录屏文件到本地
+                    if (recordPath) {
+                        const desktopPath = app.getPath('desktop');
+                        execSync(`${hdcPath} file recv ${recordPath} ${desktopPath}`);
+                    }
                 }
             })
         } catch (error) {
